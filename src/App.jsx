@@ -1,18 +1,60 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import Header from "./components/layout/Header";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import History from "./pages/History";
+import Pricing from "./pages/Pricing";
+import Login from "./pages/Login";
+import Settings from "./pages/Settings";
+import { useAuthStore } from "./store/authStore";
 
 
-function App() {
 
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-         <h1 className='bg-green-300'>This is my APP
-         </h1>
-        </div>
-      </section>
-    </>
-  )
+// Protected route — redirects to /login if not logged in
+function ProtectedRoute({ children }) {
+  const user = useAuthStore(s => s.user);
+  const loading = useAuthStore(s => s.loading);
+  if (loading) return <div className="text-white p-10">Loading...</div>;
+  return user ? children : <Navigate to="/login" replace />;
 }
 
-export default App
+function App() {
+  const init = useAuthStore((s) => s.init);
+
+  //Check auth status when app loads
+  useEffect(() => {
+    init();
+  });
+
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen bg-gray-50">
+        <Header/>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Home/>}/>
+          <Route path="/pricing" element={<Pricing/>}/>
+          <Route path="/login" element={<Login/>}/>
+
+          {/* Protected routes — must be logged in */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute><Dashboard /></ProtectedRoute>
+          } />
+          <Route path="/history" element={
+            <ProtectedRoute><History /></ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute><Settings /></ProtectedRoute>
+          } />
+
+          {/* Catch-all — redirect unknown URLs to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+}
+
+export default App;

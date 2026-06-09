@@ -12,6 +12,7 @@
   "dependencies": {
     "@stripe/react-stripe-js": "^6.6.0",
     "@stripe/stripe-js": "^9.7.0",
+    "@supabase/supabase-js": "^2.108.0",
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.17.0",
     "framer-motion": "^12.40.0",
