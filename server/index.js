@@ -1,8 +1,10 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-// import auditRoutes from "./routes/audit.js";
+import auditRoutes from "./routes/audit.js";
 // import stripeRoutes from "./routes/stripe.js";
+
+// dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -12,7 +14,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// app.use("/api/audit", auditRoutes);
+app.use("/api/audit", auditRoutes);
 // app.use("/api/stripe", stripeRoutes);
 
 app.get("/health", (req, res) => {

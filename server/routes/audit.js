@@ -1,128 +1,140 @@
-import express from "express"
+import "dotenv/config";
+import express from "express";
+import { createClient } from "@supabase/supabase-js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-const {requireAuth} = require("../middleware/authMiddleware");
-const {createClient} = require("@supabase/supabase-js");
 
-const supabase = createClient(
+function getSupabase() {
+  return createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+  );
+}
 
-const AUDIT_PROMT = (url) => `
+const AUDIT_PROMPT = (url) => `
 You are an expert website auditor. Analyze: ${url}
-Return ONLY valid JSON (no markdown, no backticks). Start with { end with }.
+Return ONLY valid JSON. No markdown. No backticks. Start with { end with }.
 {
-"url": "${url}",
-"overallScore": <0-100>,
-"stack": "<Wordpress|React|Shopiy|etc>",
-"seo": {
-"score"; <0-100>,
-"issue": [
-{
-"title": "...",
-"severity": "critical|warning|info|good",
-"description": "...",
-"fix": { "code": "...", "text": "..."}
-}]
-},
-"peformance": {"score": <0-100>, "issue": [...] },
-"security": {"score": <0-100>, "issue": [...] },
-"conversion": {"score":<0-100>, "issue": [...] },
-"competitor":{
-"score": <0-100>,
-"competitors": ["...","...","..."],
-"gaps": [...],
-"keywords": ["...","...","..."]
+  "url": "${url}",
+  "overallScore": <0-100>,
+  "stack": "<WordPress|React|HTML|Shopify|etc>",
+  "seo": { "score": <0-100>, "issues": [{ "title":"...", "severity":"critical|warning|info|good", "description":"...", "fix":{"code":"...","text":"..."} }] },
+  "performance": { "score": <0-100>, "issues": [...] },
+  "security": { "score": <0-100>, "issues": [...] },
+  "conversion": { "score": <0-100>, "issues": [...] },
+  "competitor": { "score": <0-100>, "competitors":["..."], "gaps":[{ "title":"...", "severity":"critical|warning|info", "description":"...", "fix":{"text":"..."} }], "keywords":["..."] }
 }
-}
-Provide 4-6 issues per category. Be specific and realistic for this actual site.
+Provide 4-6 issues per category. Be specific and realistic.
 `;
 
-//POST /api/audit
+// POST /api/audit
+router.post("/", requireAuth, async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ message: "URL is required" });
 
-router.post("/", requireAuth, async (req, res)=>{
-    const { url } = req.body;
+  const supabase = getSupabase();
 
-    if (!url) return res.status(400).json({message: "URL is required"});
+  try {
+    // Check quota
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan, audit_count")
+      .eq("id", req.user.id)
+      .single();
 
-    //Check user's plan quota
-    const {data: profile } = await supabase
-    .from("profiles")
-    .select("plan, audit_count")
-    .eq("id", req.user.id)
-    .single();
-
-    const limits = {free: 3, starter: 20, pro: Infinity, agency: Infinity};
+    const limits = { free: 3, starter: 20, pro: Infinity, agency: Infinity };
     const limit = limits[profile?.plan || "free"];
 
     if ((profile?.audit_count || 0) >= limit) {
-        return res.status(403).json({ message: "Audit limit reached. Please upgrade your plan." });
+      return res.status(403).json({ message: "Audit limit reached. Please upgrade." });
     }
 
-    try {
-        // Call Anthropic API from backend (API key stays safe here)
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-api-key": process.env.ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-            },
-            body: JSON.stringify({
-                model: "claude-sonnet-4-20250514",
-                max_tokens: 6000,
-                system: "You are a website auditor. Analyze the given URL and provide a detailed audit in JSON format. No markdown, no explanations, just JSON.",
-                messages: [
-                    { role: "user", content: AUDIT_PROMT(url) }
-                ]
-            }),
-        });
+    // Call Gemini
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: AUDIT_PROMPT(url) }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 6000,
+          },
+        }),
+      }
+    );
 
-        const data = await response.json();
-        const raw = data.content.map(b => b.text || "").join("");
+    const geminiData = await geminiRes.json();
 
-        // Parse the raw response as JSON
-        let audit;
-        try{
-            const start = raw.indexOf("{"), end = raw.lastIndexOf("}");
-            audit = JSON.parse(raw.substring(start, end + 1));
-        }catch{
-            return res.status(500).json({ message: "Failed to parse audit result. The response was not valid JSON.", raw });
-        }
-
-        // Increment audit report
-        await supabase
-        .from("profiles")
-        .update({ audit_count: (profile?.audit_count || 0) + 1 })
-        .eq("id", req.user.id);
-
-        res.json({ audit });
-    } catch (error) {
-        return res.status(500).json({ message: "Server error", error: error.message });
+    if (!geminiRes.ok) {
+      console.error("Gemini error:", geminiData);
+      return res.status(500).json({ message: "AI API error: " + JSON.stringify(geminiData.error) });
     }
+
+    const raw = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // Parse JSON safely
+    let audit = null;
+    const strategies = [
+      () => JSON.parse(raw.trim()),
+      () => JSON.parse(raw.replace(/```json|```/g, "").trim()),
+      () => { const s = raw.indexOf("{"), e = raw.lastIndexOf("}"); return JSON.parse(raw.slice(s, e + 1)); },
+    ];
+
+    for (const fn of strategies) {
+      try { audit = fn(); if (audit?.seo) break; } catch {}
+    }
+
+    if (!audit) {
+      return res.status(500).json({ message: "Failed to parse AI response", raw });
+    }
+
+    // Increment quota
+    await supabase
+      .from("profiles")
+      .update({ audit_count: (profile?.audit_count || 0) + 1 })
+      .eq("id", req.user.id);
+
+    res.json(audit);
+
+  } catch (e) {
+    console.error("Audit error:", e);
+    res.status(500).json({ message: "Server error: " + e.message });
+  }
 });
 
-//POST /api/audit/save - save audit report to DB
-router.post("/save", requireAuth, async (req, res)=>{
-    const { url, audit } = req.body;
+// POST /api/audit/save
+router.post("/save", requireAuth, async (req, res) => {
+  const supabase = getSupabase();
+  const audit = req.body;
 
-    if (!url || !audit) {
-        return res.status(400).json({message: "URL and audit data are required"});
-    }
+  const { error } = await supabase.from("audits").insert({
+    user_id: req.user.id,
+    url: audit.url,
+    overall_score: audit.overallScore,
+    result: audit,
+    created_at: new Date().toISOString(),
+  });
 
-    const {error} = await supabase.from("audits").insert({
-        user_id: req.user.id,
-        url,
-        report: audit,
-        created_at: new Date().toISOString(),
-    });
-
-    if (error) {
-        return res.status(500).json({ message: "Failed to save audit", error: error.message });
-    }
-
-    res.status(201).json({ message: "Audit saved successfully" });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ success: true });
 });
 
-module.exports = router;
+// GET /api/audit/history
+router.get("/history", requireAuth, async (req, res) => {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from("audits")
+    .select("id, url, overall_score, created_at")
+    .eq("user_id", req.user.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+export default router;
