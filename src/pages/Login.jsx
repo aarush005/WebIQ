@@ -27,11 +27,15 @@ const handleSubmit = async (e) => {
 try {
   if (isSignUp) {
     const {data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+    if (error) {
+      console.log("Signup error : ", error)
+      throw error};
     setMessage("Sign up successful! Please check your email to confirm your account.");
   } else {
     const {data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      console.log("Signup error : ", error)
+      throw error};
     setUser(data.user);
     navigate("/");
   }
@@ -55,7 +59,7 @@ const handleGoogle = async () =>{
 
 return (
   <main className="min-h-screen flex items-center justify-center px-4">
-    <div className="bg-white rounded-2xl shadow-sm border border gray-100 p-8 w-full max-w-md">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-md">
       <h1 className="text-2xl font-bold mb-6 text-center">{isSignUp ? "Create account" : "Welcome back"}</h1>
        <p className="text-gray-500 text-sm mb-6">{isSignUp ? "Start your free plan - 3 audits/month" : "Sign in to your WebIQ account"}</p>
       {/* Google OAuth */}
@@ -85,7 +89,7 @@ return (
       placeholder="Password"
       value={password}
       onChange={(e) => setPassword(e.target.value)}
-      onkeyDown={(e) => {
+      onKeyDown={(e) => {
         if (e.key === "Enter") {
           handleSubmit(e);
         }
@@ -115,5 +119,4 @@ return (
 
   </main>
 )
-    
 }

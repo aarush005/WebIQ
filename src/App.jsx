@@ -8,6 +8,7 @@ import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import { useAuthStore } from "./store/authStore";
+import { supabase } from "./api/supabase";
 
 
 
@@ -22,11 +23,23 @@ function ProtectedRoute({ children }) {
 
 function App() {
   const init = useAuthStore((s) => s.init);
+  const setUser = useAuthStore(s => s.setUser);
+
 
   //Check auth status when app loads
   useEffect(() => {
     init();
-  });
+  }, []);
+
+  useEffect(() => {
+  // Listen for login/logout events
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (event, session) => {
+      setUser(session?.user ?? null);
+    }
+  );
+  return () => subscription.unsubscribe();
+}, []);
 
   return (
     <BrowserRouter>
