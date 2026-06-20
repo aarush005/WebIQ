@@ -1,21 +1,19 @@
 import { useAuditStore } from "../store/auditStore";
 
 export function useAudit() {
-  const setLoading = useAuditStore(s => s.setLoading);
-  const setError   = useAuditStore(s => s.setError);
-  const setCurrent = useAuditStore(s => s.setCurrent);
+  const setLoading   = useAuditStore(s => s.setLoading);
+  const setError     = useAuditStore(s => s.setError);
+  const setCurrent   = useAuditStore(s => s.setCurrent);
   const addToHistory = useAuditStore(s => s.addToHistory);
-
 
   const analyze = async (url) => {
     setLoading(true);
     setError(null);
 
-    // Build the prompt
     const prompt = `You are an expert website auditor. Analyze the website: ${url}
 
-Return ONLY a valid JSON object (no markdown, no explanation, no backticks).
-Start your response with { and end with }.
+Return ONLY a valid JSON object. No markdown, no backticks, no explanation.
+Start with { and end with }.
 
 {
   "url": "${url}",
@@ -58,33 +56,40 @@ Start your response with { and end with }.
 Provide 4-5 issues per category. Be specific and realistic for this actual website.`;
 
     try {
-      // ── Calling Gemini API directly from frontend (no backend needed for now) ──
-      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 6000,
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GROQ_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          max_tokens: 6000,
+          temperature: 0.7,
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert website auditor. Respond ONLY with valid JSON. No markdown. No explanation. Start with { and end with }.",
             },
-          }),
-        }
-      );
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        }),
+      });
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.error?.message || "Gemini API error");
+        throw new Error(err.error?.message || "Groq API error");
       }
 
       const data = await response.json();
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const raw = data.choices?.[0]?.message?.content || "";
 
-      // Parse JSON safely
+      // Parse JSON safely — try multiple strategies
       let audit = null;
       const strategies = [
         () => JSON.parse(raw.trim()),

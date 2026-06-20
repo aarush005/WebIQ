@@ -51,29 +51,38 @@ router.post("/", requireAuth, async (req, res) => {
     }
 
     // Call Gemini
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+// Replace the Gemini fetch with this Groq fetch
+const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+  },
+  body: JSON.stringify({
+    model: "llama-3.3-70b-versatile",
+    max_tokens: 6000,
+    temperature: 0.7,
+    messages: [
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: AUDIT_PROMPT(url) }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 6000,
-          },
-        }),
-      }
-    );
+        role: "system",
+        content: "You are an expert website auditor. Respond ONLY with valid JSON. No markdown. Start with { and end with }.",
+      },
+      {
+        role: "user",
+        content: AUDIT_PROMPT(url),
+      },
+    ],
+  }),
+});
 
-    const geminiData = await geminiRes.json();
+const groqData = await groqRes.json();
 
-    if (!geminiRes.ok) {
-      console.error("Gemini error:", geminiData);
-      return res.status(500).json({ message: "AI API error: " + JSON.stringify(geminiData.error) });
-    }
+if (!groqRes.ok) {
+  console.error("Groq error:", groqData);
+  return res.status(500).json({ message: "AI error: " + groqData.error?.message });
+}
 
-    const raw = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+const raw = groqData.choices?.[0]?.message?.content || "";
 
     // Parse JSON safely
     let audit = null;
