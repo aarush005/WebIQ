@@ -18,7 +18,7 @@ export const useAuditStore = create(
       clearCurrent: () => set({ current: null }),
     }),
     {
-      name: "growthlens-audits",
+      name: "webiq-audits",
       partialize: (state) => ({
         current: state.current,
         audits: state.audits,

@@ -52,7 +52,7 @@ export async function exportAuditPDF(audit) {
 
   el.innerHTML = `
     <div style="border-bottom:3px solid #7c3aed;padding-bottom:20px;margin-bottom:28px;">
-      <h1 style="margin:0 0 4px;font-size:26px;font-weight:800;color:#0f0f1a;">GrowthLens Audit Report</h1>
+      <h1 style="margin:0 0 4px;font-size:26px;font-weight:800;color:#0f0f1a;">WebIQ Audit Report</h1>
       <p style="margin:0;color:#888;font-size:14px;">${audit.url} · ${new Date(audit.auditedAt || Date.now()).toLocaleDateString()}</p>
     </div>
 
@@ -95,7 +95,7 @@ export async function exportAuditPDF(audit) {
       .replace(/https?:\/\//, "")
       .replace(/[^a-z0-9]/gi, "-")
       .toLowerCase();
-    pdf.save(`growthlens-${filename}.pdf`);
+    pdf.save(`webiq-${filename}.pdf`);
 
   } finally {
     document.body.removeChild(el);

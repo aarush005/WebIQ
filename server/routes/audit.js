@@ -50,7 +50,7 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(403).json({ message: "Audit limit reached. Please upgrade." });
     }
 
-    // Call Gemini
+// Call Gemini
 // Replace the Gemini fetch with this Groq fetch
 const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
   method: "POST",
