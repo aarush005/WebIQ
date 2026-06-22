@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuditStore } from "../store/auditStore";
@@ -66,7 +65,7 @@ export default function Home() {
         {/* Headline */}
         <h1 className="text-5xl font-extrabold text-white leading-tight mb-4">
           One URL.{" "}
-          <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
             Full Picture.
           </span>
         </h1>
@@ -89,7 +88,7 @@ export default function Home() {
           <button
             onClick={handleAudit}
             disabled={loading || !url.trim()}
-            className="bg-gradient-to-r from-violet-600 to-blue-500 text-white px-5 py-3 rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition flex items-center gap-2 min-w-[170px] justify-center"
+            className="bg-linear-to-r from-violet-600 to-blue-500 text-white px-5 py-3 rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition flex items-center gap-2 min-w-[170px] justify-center"
           >
             {loading ? (
               <>
