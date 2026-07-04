@@ -3,6 +3,7 @@ import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
+
 const router = express.Router();
 
 function getSupabase() {
