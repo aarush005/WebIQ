@@ -9,22 +9,19 @@ import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import { useAuthStore } from "./store/authStore";
 import { supabase } from "./api/supabase";
-
-
-
+import Account from "./pages/Account";
 
 // Protected route — redirects to /login if not logged in
 function ProtectedRoute({ children }) {
-  const user = useAuthStore(s => s.user);
-  const loading = useAuthStore(s => s.loading);
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.loading);
   if (loading) return <div className="text-white p-10">Loading...</div>;
   return user ? children : <Navigate to="/login" replace />;
 }
 
 function App() {
   const init = useAuthStore((s) => s.init);
-  const setUser = useAuthStore(s => s.setUser);
-
+  const setUser = useAuthStore((s) => s.setUser);
 
   //Check auth status when app loads
   useEffect(() => {
@@ -32,35 +29,59 @@ function App() {
   }, []);
 
   useEffect(() => {
-  // Listen for login/logout events
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (event, session) => {
+    // Listen for login/logout events
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-    }
-  );
-  return () => subscription.unsubscribe();
-}, []);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50">
-        <Header/>
+        <Header />
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Home/>}/>
-          <Route path="/pricing" element={<Pricing/>}/>
-          <Route path="/login" element={<Login/>}/>
+          <Route path="/" element={<Home />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/login" element={<Login />} />
 
           {/* Protected routes — must be logged in */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute><Dashboard /></ProtectedRoute>
-          } />
-          <Route path="/history" element={
-            <ProtectedRoute><History /></ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute><Settings /></ProtectedRoute>
-          } />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <Account />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Catch-all — redirect unknown URLs to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

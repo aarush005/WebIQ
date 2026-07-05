@@ -88,7 +88,7 @@ export default function Pricing() {
         key:          keyId,
         amount:       amount,
         currency:     currency,
-        name:         "GrowthLens",
+        name:         "WebIQ",
         description:  planName,
         order_id:     orderId,
         image:        "/logo.png", // optional — your logo
