@@ -105,7 +105,7 @@ export default function Account() {
 
       {/* Usage Bar */}
 
-      {/* <div className="mb-4">
+      <div className="mb-4">
         <div className="flex justify-between text-sm mb-2">
           <span className="text-gray-600 font-medium">Audits this month</span>
           <span className="text-gray-500">
@@ -113,9 +113,27 @@ export default function Account() {
           </span>
         </div>
         {auditLimit && (
-
-                )}
-      </div> */}
+          <div className="w-full-bg-gray-100 rounded-full h-2 5">
+            <div
+              className={`h-2.5 rounded-full transition-all ${
+                usagePct >= 90
+                  ? "bg-red-500"
+                  : usagePct >= 70
+                    ? "bg-amber-500"
+                    : "bg-violet-500"
+              }`}
+              style={{ width: `${usagePct}%` }}
+            />
+          </div>
+        )}
+        <p className="text-xs text-gray-400 mt-1 5">
+          {remaining === "Unlimited"
+            ? "✨ You have unlimited audits"
+            : remaining === 0
+              ? "⚠️ You've used all your audits this month"
+              : `${remaining} audits remaining this month`}
+        </p>
+      </div>
     </main>
   );
 }
