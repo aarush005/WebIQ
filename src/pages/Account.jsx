@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../api/supabase";
 import { useAuthStore } from "../store/authStore";
 import { useNavigate } from "react-router";
+import { button, span } from "framer-motion/client";
 
 const PLAN_DETAILS = {
   free: {
@@ -133,6 +134,23 @@ export default function Account() {
               ? "⚠️ You've used all your audits this month"
               : `${remaining} audits remaining this month`}
         </p>
+      </div>
+
+      {/* Plan info */}
+      <div className="bg-gray-50 rounded-xl flex items-center justify-between">
+        <div>
+            <p className="font-semibold text-gray-800">{planInfo.label} Plan</p>
+            <div className="text-sm text-gray-500">{planInfo.price}</div>
+        </div>
+        {plan === "free" || plan === "starter" ?  (
+            <button 
+            onClick={() =>navigate("/pricing")}
+            className="bg-violet-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-violet-700 transition">
+                Upgrade Plan
+            </button>
+        ):(
+            <span className="text-green-600 text-sm font-semibold">✓ Active</span>
+        )}
       </div>
     </main>
   );
