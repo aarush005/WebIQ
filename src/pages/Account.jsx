@@ -163,7 +163,7 @@ export default function Account() {
         {/* Audit Stats */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h2 className="font-semibold text-gray-900 mb-4">Plan Details</h2>
-            <div className="grid grid-colsgap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {[
               { label: "Current Plan",    value: planInfo.label },
               { label: "Monthly Price",   value: planInfo.price },
@@ -177,6 +177,37 @@ export default function Account() {
                 <p className="font-semibold text-gray-800 text-sm">{value}</p>
               </div>
             ))}
+            </div>
+        </div>
+
+        {/* Danger Zone */}
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h2 className="font-semibold text-gray-900 mb-4">
+                Account Actions
+            </h2>
+            <div className="space-y-3">
+                <button
+                onClick={() => navigate("/pricing")}
+                className="w-full text-left px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition flex items-center justify-between"
+                >
+                    <span>Manage Subscription</span>
+                    <span className="text-gray-400">→</span>
+                </button>
+                <button
+                onClick={() => navigate("/history")}
+                className="w-full text-left px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition flex items-center justify-between"
+                >
+                    <span>View Audit History</span>
+                    <span className="text-gray-400">→</span>
+                </button>
+                <button
+                onClick={handleSignOut}
+                className="w-full text-left px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition flex items-center justify-between"
+                >
+                    <span>Sign Out</span>
+                    <span className="text-gray-400">→</span>
+                </button>
             </div>
         </div>
       </div>
