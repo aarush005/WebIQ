@@ -20,7 +20,7 @@ export default function Header() {
           🔬
         </div>
         <span className="text-white font-bold text-xl tracking-tight">
-          Web<span className="text-violet-400">IQ</span>
+          Web<span className="text-violet-400"  >IQ</span>
         </span>
       </Link>
 
