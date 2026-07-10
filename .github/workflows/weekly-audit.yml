@@ -1,0 +1,16 @@
+name: Weekly Website Audit
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"   # every Monday at 9:00 AM UTC
+  workflow_dispatch:        # allows manual trigger from GitHub UI for testing
+
+jobs:
+  run-weekly-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger weekly audit endpoint
+        run: |
+          curl -X POST https://your-backend.vercel.app/api/cron/weekly-audit \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
