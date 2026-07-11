@@ -2,8 +2,8 @@
 // It re-audits every active watchlist entry and emails a report
 
 import express from "express"
-import { creatClient} from "@supabase/supabase-js"
-
+import { createClient } from "@supabase/supabase-js";
+  
 const router = express.Router();
 
 function getSupabase() {
