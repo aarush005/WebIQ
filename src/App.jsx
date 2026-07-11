@@ -10,6 +10,7 @@ import Settings from "./pages/Settings";
 import { useAuthStore } from "./store/authStore";
 import { supabase } from "./api/supabase";
 import Account from "./pages/Account";
+import TimeMachine from "./pages/TimeMachine";
 
 // Protected route — redirects to /login if not logged in
 function ProtectedRoute({ children }) {
@@ -79,6 +80,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Account />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/time-machine"
+            element={
+              <ProtectedRoute>
+                <TimeMachine />
               </ProtectedRoute>
             }
           />
