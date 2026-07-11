@@ -45,6 +45,28 @@ export default function TimeMachine() {
     if (user) loadSites();
   }, [user]);
 
+  const handleAdd = async() =>{
+    if (!newUrl.trim()) return;
+    setAdding(true);
+    setError("");
+try{
+    const headers = await authHeader();
+    const res = await fetch(`${API_URL}/api/watchlist`, {
+        method: "POST",
+        headers: {...headers, "Content-Type": "application/json"},
+        body:JSON.stringify({ url:newUrl.trim()})
+    })
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.message);
+    setNewUrl("");
+    loadSites();
+}catch (e){
+    setError(e.message)
+}
+setAdding(false);
+  }
+  
+
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
