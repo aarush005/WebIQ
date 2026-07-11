@@ -65,7 +65,31 @@ try{
 }
 setAdding(false);
   }
-  
+
+  const handleRemove = async (id) =>{
+    const headers = await authHeader();
+    await fetch(`${API_URL}/api/watchlist/${id}`, {
+        method: "DELETE", headers
+    });
+    loadSites();
+    if(selected === id)  setSelected(null);
+  };
+
+  const handleViewHistory = async (id) => {
+    const headers = await authHeader();
+    const res = await fetch(`${API_URL}/api/watchlist/${id}/history`, { headers});
+    const data = await res.json();
+    setHistory(Array.isArray(data) ? data.map(h => ({
+        ...h,
+        date: new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short"}),
+    })):[])
+  };
+
+  if(loading) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full"/>
+    </div>
+  );
 
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4">
