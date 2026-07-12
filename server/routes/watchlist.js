@@ -25,53 +25,93 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 // POST /api/watchlist — add a site to track
+// POST /api/watchlist — add a site to track
 router.post("/", requireAuth, async (req, res) => {
-  const { url, nickname } = req.body;
-  if (!url) return res.status(400).json({ message: "URL is required" });
+  try {
+    const { url, nickname } = req.body;
+    if (!url) return res.status(400).json({ message: "URL is required" });
 
-  const supabase = getSupabase();
+    const supabase = getSupabase();
 
-  // Check plan — only paid plans can use Time Machine
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("plan")
-    .eq("id", req.user.id)
-    .single();
+    // Get profile — use maybeSingle() so it returns null instead of crashing
+    let { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", req.user.id)
+      .maybeSingle();
 
-  if (profile?.plan === "free") {
-    return res.status(403).json({
-      message: "Website Time Machine is a Pro feature. Please upgrade to track sites.",
-    });
-  }
-
-  // Check watchlist limit (Starter: 3, Pro: 15, Agency: unlimited)
-  const limits = { starter: 3, pro: 15, agency: 100 };
-  const { count } = await supabase
-    .from("watchlist")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", req.user.id)
-    .eq("active", true);
-
-  if (count >= (limits[profile.plan] || 0)) {
-    return res.status(403).json({
-      message: `You've reached your tracking limit (${limits[profile.plan]} sites) for the ${profile.plan} plan.`,
-    });
-  }
-
-  const { data, error } = await supabase
-    .from("watchlist")
-    .insert({ user_id: req.user.id, url, nickname: nickname || null })
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === "23505") {
-      return res.status(409).json({ message: "This site is already being tracked" });
+    if (profileError) {
+      console.error("Profile fetch error:", profileError);
+      return res.status(500).json({ message: "Could not fetch your profile: " + profileError.message });
     }
-    return res.status(500).json({ message: error.message });
-  }
 
-  res.status(201).json(data);
+    // ✅ If no profile exists yet, auto-create one (safety net for the trigger)
+    if (!profile) {
+      console.log("⚠️ No profile found for user, creating one now:", req.user.id);
+      const { data: newProfile, error: createError } = await supabase
+        .from("profiles")
+        .insert({
+          id: req.user.id,
+          email: req.user.email,
+          plan: "free",
+          audit_count: 0,
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Auto-create profile error:", createError);
+        return res.status(500).json({ message: "Could not create your profile: " + createError.message });
+      }
+
+      profile = newProfile;
+    }
+
+    // Now safe to use profile.plan
+    if (profile.plan === "free") {
+      return res.status(403).json({
+        message: "Website Time Machine is a Pro feature. Please upgrade to track sites.",
+      });
+    }
+
+    const limits = { starter: 3, pro: 15, agency: 100 };
+    const { count, error: countError } = await supabase
+      .from("watchlist")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", req.user.id)
+      .eq("active", true);
+
+    if (countError) {
+      console.error("Count error:", countError);
+      return res.status(500).json({ message: "Watchlist table error: " + countError.message });
+    }
+
+    if ((count || 0) >= (limits[profile.plan] || 0)) {
+      return res.status(403).json({
+        message: `You've reached your tracking limit (${limits[profile.plan]} sites) for the ${profile.plan} plan.`,
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("watchlist")
+      .insert({ user_id: req.user.id, url, nickname: nickname || null })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Insert error:", error);
+      if (error.code === "23505") {
+        return res.status(409).json({ message: "This site is already being tracked" });
+      }
+      return res.status(500).json({ message: error.message });
+    }
+
+    res.status(201).json(data);
+
+  } catch (e) {
+    console.error("💥 Watchlist POST crashed:", e);
+    res.status(500).json({ message: "Server error: " + e.message });
+  }
 });
 
 // DELETE /api/watchlist/:id — stop tracking a site

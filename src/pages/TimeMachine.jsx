@@ -12,6 +12,7 @@ import {
   Legend,
   Line,
 } from "recharts";
+import { supabase } from "../api/supabase";
 
 const API_URL = import.meta.env.VITE_API_URL || "http:localhost:4000";
 
@@ -33,8 +34,8 @@ export default function TimeMachine() {
     return { Authorization: `Bearer ${session?.access_token}` };
   };
 
-  const loadSites = async () => {
-    const header = await authHeader();
+const loadSites = async () => {
+    const headers = await authHeader();
     const res = await fetch(`${API_URL}/api/watchlist`, { headers });
     const data = await res.json();
     setSites(Array.isArray(data) ? data : []);
