@@ -59,7 +59,7 @@ async function sendReportEmail(toEmail, results) {
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-      <h2 style="color:#7c3aed;">📊 Your Weekly GrowthLens Report</h2>
+      <h2 style="color:#7c3aed;">📊 Your Weekly WebIQ Report</h2>
       <p style="color:#666;">Here's how your tracked sites performed this week:</p>
       <table style="width:100%;border-collapse:collapse;margin:20px 0;">
         <tr style="background:#f8f8f8;">
@@ -69,7 +69,7 @@ async function sendReportEmail(toEmail, results) {
         ${rows}
       </table>
       <p style="color:#888;font-size:13px;">
-        Log in to GrowthLens to see the full breakdown and AI-suggested fixes.
+        Log in to WebIQ to see the full breakdown and AI-suggested fixes.
       </p>
     </div>
   `;
@@ -81,7 +81,7 @@ async function sendReportEmail(toEmail, results) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "GrowthLens <reports@yourdomain.com>", // must verify domain in Resend
+      from: "WebIQ <onboarding@resend.dev>", // must verify domain in Resend
       to: toEmail,
       subject: "📊 Your Weekly Website Score Report",
       html,
