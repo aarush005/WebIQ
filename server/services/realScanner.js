@@ -78,5 +78,31 @@ function checkSecurityHeaders(headers) {
       why: "Controls which browser features (camera, mic, geolocation) the page can access.",
       fixCode: "Permissions-Policy: geolocation=(), camera=(), microphone=()",
     },
-    ]
+    ];
+
+    for (const check of checks) {
+        const present = headers.get(check.key);
+        findings.push({
+            title: check.title,
+            present: !!present,
+            value: present || null,
+            severity: present ? "good" : "warning",
+            description: present 
+            ? `This header is correctly set: ${present}`
+            : `Missing. ${check.why}`,
+            fixCode: present ? "" : `${check.key}: (add server config)\nExample : ${check.fixCode}`,
+        })
+    }
+
+
+
+    // Server version disclosure - real security risk
+
+    const serverHeader = header.get("server");
+    if (serverHeader && /\d/.test(serverHeader)) {
+        
+    }
 }
+
+
+
