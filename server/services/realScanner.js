@@ -140,6 +140,44 @@ function checkSecurityHeaders(headers) {
         }
         return findings;
     }
+
+    
+// ── Parse HTML for real on-page issues ─────────────────────
+function analyzeHTML(html, url) {
+  const $ = cheerio.load(html);
+  const findings = { seo: [], performance: [], conversion: [] };
+
+  // ── Title tag ──
+  const title = $("title").text().trim();
+  if (!title) {
+    findings.seo.push({
+      title: "Missing <title> tag",
+      severity: "critical",
+      description: "No title tag found. This is one of the most important SEO signals.",
+      fixCode: `<title>Your Page Title Here (50-60 characters)</title>`,
+    });
+  } else if (title.length > 60) {
+    findings.seo.push({
+      title: "Title tag too long",
+      severity: "warning",
+      description: `Title is ${title.length} characters: "${title}". Google truncates titles beyond ~60 characters in search results.`,
+      fixCode: `<title>${title.slice(0, 57)}...</title>`,
+    });
+  } else if (title.length < 30) {
+    findings.seo.push({
+      title: "Title tag too short",
+      severity: "info",
+      description: `Title is only ${title.length} characters: "${title}". Consider expanding to 50-60 characters for better SEO.`,
+      fixCode: "",
+    });
+  } else {
+    findings.seo.push({
+      title: "Title tag well optimized",
+      severity: "good",
+      description: `Title length (${title.length} chars) is in the ideal range: "${title}"`,
+      fixCode: "",
+    });
+  }
 }
 
 
