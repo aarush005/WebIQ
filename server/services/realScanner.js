@@ -233,6 +233,17 @@ function analyzeHTML(html, url) {
       fixCode: "",
     });
   }
+
+    // ── Viewport meta (mobile) ──
+  const viewport = $('meta[name="viewport"]').attr("content");
+  if (!viewport) {
+    findings.performance.push({
+      title: "Missing viewport meta tag",
+      severity: "critical",
+      description: "No viewport tag found — page will not render correctly on mobile devices.",
+      fixCode: `<meta name="viewport" content="width=device-width, initial-scale=1.0">`,
+    });
+  }
 }
 
   
