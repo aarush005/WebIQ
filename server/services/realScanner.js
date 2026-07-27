@@ -244,6 +244,24 @@ function analyzeHTML(html, url) {
       fixCode: `<meta name="viewport" content="width=device-width, initial-scale=1.0">`,
     });
   }
+
+    // ── H1 tag count ──
+  const h1Count = $("h1").length;
+  if (h1Count === 0) {
+    findings.seo.push({
+      title: "No H1 tag found",
+      severity: "warning",
+      description: "Every page should have exactly one H1 tag describing the main topic.",
+      fixCode: `<h1>Main Page Heading</h1>`,
+    });
+  } else if (h1Count > 1) {
+    findings.seo.push({
+      title: `Multiple H1 tags found (${h1Count})`,
+      severity: "info",
+      description: "Having multiple H1 tags can dilute SEO signal. Best practice is one H1 per page.",
+      fixCode: "",
+    });
+  }
 }
 
   
